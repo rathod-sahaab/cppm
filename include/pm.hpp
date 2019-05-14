@@ -1,90 +1,137 @@
 #ifndef PM_HPP
 #define PM_HPP
 
+#include <algorithm>
 #include <iostream>
 #include <string>
+#include <vector>
 
 struct Header {
   std::string format;
   unsigned width, height;
   unsigned max_pixel_value;
 
-  friend std::ostream& operator<<(std::ostream&, Header&);
+  friend std::ostream& operator<<(std::ostream&, const Header&);
 };
 
+template <class T>
 class PixMap {
   Header head;
-  unsigned* data;
-  unsigned counter, limit;
+  std::vector<T> data;
+  unsigned counter;
 
  public:
   PixMap();
-  PixMap(std::string, unsigned, unsigned, unsigned, unsigned = 1);
-  ~PixMap();
+  PixMap(std::string, unsigned width, unsigned height, unsigned max_value);
+  /* ~PixMap(); */
 
-  friend std::ostream& operator<<(std::ostream&, PixMap&);
+  template <class U>
+  friend std::ostream& operator<<(std::ostream&, const PixMap<U>&);
 
-  void operator<<(unsigned);
+  PixMap<T>& operator<<(T);
 
   void set_format();
   void set_width();
   void set_height();
   void set_max();
+
+  PixMap<T>& set_pixel(unsigned x, unsigned y, T val);
 };
-class PixBitMap : public PixMap {
+class PixBitMap : public PixMap<unsigned> {
  public:
   PixBitMap();
-  PixBitMap(unsigned, unsigned);
-  PixBitMap(unsigned, unsigned, std::string);
+  PixBitMap(unsigned width, unsigned height);
+  /* PixBitMap(unsigned, unsigned, std::string); */
 };
 
-std::ostream& operator<<(std::ostream& out, Header& h) {
+class PixGreyMap : public PixMap<unsigned> {
+ public:
+  PixGreyMap();
+  PixGreyMap(unsigned width, unsigned height, unsigned max_pixel_value);
+};
+
+struct RGB {
+  unsigned r, g, b;
+  friend std::ostream& operator<<(std::ostream&, const RGB&);
+  RGB();
+  RGB(unsigned, unsigned, unsigned);
+};
+class PixPixMap : public PixMap<RGB> {
+ public:
+  PixPixMap();
+  PixPixMap(unsigned width, unsigned height, unsigned max_pixel_value);
+};
+
+std::ostream& operator<<(std::ostream& out, const Header& h) {
   out << h.format << '\n'
       << h.width << ' ' << h.height << '\n'
       << h.max_pixel_value << '\n';
   return out;
 }
 
-PixMap::PixMap(std::string format, unsigned width, unsigned height,
-               unsigned max_pixel_value, unsigned division_factor) {
+std::ostream& operator<<(std::ostream& out, const RGB& rgb) {
+  out << rgb.r << ' ' << rgb.g << ' ' << rgb.b;
+  return out;
+}
+
+template <class U>
+std::ostream& operator<<(std::ostream& out, const PixMap<U>& pix_map) {
+  out << pix_map.head;
+  for (auto const& d : pix_map.data) {
+    out << d << '\n';
+  }
+  return out;
+}
+
+template <class T>
+PixMap<T>::PixMap(std::string format, unsigned width, unsigned height,
+                  unsigned max_pixel_value) {
   head.format = format;
   head.width = width;
   head.height = height;
   head.max_pixel_value = max_pixel_value;
 
-  if (division_factor == 1) {
-    limit = width * height;
-  } else {
-    limit = width * height / division_factor;
-    if (width * height % division_factor != 0) {
-      limit++;
-    }
-  }
-
-  data = new unsigned[limit];
+  data.resize(width * height);
   counter = 0;
 }
 
-PixMap::~PixMap() { delete[] data; }
+template <class T>
+PixMap<T>& PixMap<T>::operator<<(T val) {
+  data.at(counter) = val;
+  return *this;
+}
 
-void PixMap::operator<<(unsigned val) { *(data + counter++) = val; }
-
-std::ostream& operator<<(std::ostream& out, PixMap& pix_map) {
-  out << pix_map.head;
-  for (auto i = pix_map.data, l = pix_map.data + pix_map.limit; i < l; ++i) {
-    out << *i << '\n';
-  }
-  return out;
+template <class T>
+PixMap<T>& PixMap<T>::set_pixel(unsigned i, unsigned j, T val) {
+  data.at(i * head.width + j) = val;
+  return *this;
 }
 
 PixBitMap::PixBitMap(unsigned width, unsigned height)
-    : PixMap("P1", width, height, 1) {}
+    : PixMap<unsigned>("P1", width, height, 1) {}
 
-PixBitMap::PixBitMap(unsigned width, unsigned height, std::string type) {
-  if (type == "regular") {
-    PixMap("P4", width, height, 1, 8);
-  } else if (type == "plain") {
-    PixBitMap(width, height);
-  }
+/* PixBitMap::PixBitMap(unsigned width, unsigned height, std::string type) { */
+/*   if (type == "regular") { */
+/*     PixMap("P4", width, height, 1); */
+/*   } else if (type == "plain") { */
+/*     PixBitMap(width, height); */
+/*   } */
+/* } */
+PixGreyMap::PixGreyMap(unsigned width, unsigned height,
+                       unsigned max_pixel_value)
+    : PixMap<unsigned>("P2", width, height, max_pixel_value) {}
+
+RGB::RGB() {
+  r = 0;
+  g = 0;
+  b = 0;
 }
+RGB::RGB(unsigned red, unsigned green, unsigned blue) {
+  r = red;
+  g = green;
+  b = blue;
+}
+
+PixPixMap::PixPixMap(unsigned width, unsigned height, unsigned max_pixel_value)
+    : PixMap<RGB>("P3", width, height, max_pixel_value) {}
 #endif  // PM_HPP
