@@ -1,7 +1,8 @@
-#ifndef PM_HPP
-#define PM_HPP
+#ifndef PPM_HPP
+#define PPM_HPP
 
 #include <algorithm>
+#include <deque>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -17,37 +18,36 @@ struct Header {
 template <class T>
 class PixMap {
   Header head;
-  std::vector<T> data;
-  unsigned counter;
+  std::deque<std::vector<T>> data;
 
  public:
   PixMap();
-  PixMap(std::string, unsigned width, unsigned height, unsigned max_value);
-  /* ~PixMap(); */
+  PixMap(std::string, size_t width, size_t height, unsigned max_value);
 
   template <class U>
   friend std::ostream& operator<<(std::ostream&, const PixMap<U>&);
 
-  PixMap<T>& operator<<(T);
+  inline unsigned get_height() const;
+  inline unsigned get_width() const;
 
   void set_format();
   void set_width();
   void set_height();
   void set_max();
 
-  PixMap<T>& set_pixel(unsigned x, unsigned y, T val);
+  PixMap<T>& set_pixel(size_t x, size_t y, T val);
 };
 class PixBitMap : public PixMap<unsigned> {
  public:
   PixBitMap();
-  PixBitMap(unsigned width, unsigned height);
+  PixBitMap(size_t width, size_t height);
   /* PixBitMap(unsigned, unsigned, std::string); */
 };
 
 class PixGreyMap : public PixMap<unsigned> {
  public:
   PixGreyMap();
-  PixGreyMap(unsigned width, unsigned height, unsigned max_pixel_value);
+  PixGreyMap(size_t width, size_t height, unsigned max_pixel_value);
 };
 
 struct RGB {
@@ -59,7 +59,7 @@ struct RGB {
 class PixPixMap : public PixMap<RGB> {
  public:
   PixPixMap();
-  PixPixMap(unsigned width, unsigned height, unsigned max_pixel_value);
+  PixPixMap(size_t width, size_t height, unsigned max_pixel_value);
 };
 
 std::ostream& operator<<(std::ostream& out, const Header& h) {
@@ -67,6 +67,16 @@ std::ostream& operator<<(std::ostream& out, const Header& h) {
       << h.width << ' ' << h.height << '\n'
       << h.max_pixel_value << '\n';
   return out;
+}
+
+template <class T>
+inline unsigned PixMap<T>::get_height() const {
+  return head.height;
+}
+
+template <class T>
+inline unsigned PixMap<T>::get_width() const {
+  return head.width;
 }
 
 std::ostream& operator<<(std::ostream& out, const RGB& rgb) {
@@ -77,48 +87,42 @@ std::ostream& operator<<(std::ostream& out, const RGB& rgb) {
 template <class U>
 std::ostream& operator<<(std::ostream& out, const PixMap<U>& pix_map) {
   out << pix_map.head;
-  for (auto const& d : pix_map.data) {
-    out << d << '\n';
+  for (const auto& dat : pix_map.data) {
+    for (const auto& d : dat) {
+      out << d << '\n';
+    }
   }
   return out;
 }
 
 template <class T>
-PixMap<T>::PixMap(std::string format, unsigned width, unsigned height,
+PixMap<T>::PixMap(std::string format, size_t width, size_t height,
                   unsigned max_pixel_value) {
   head.format = format;
   head.width = width;
   head.height = height;
   head.max_pixel_value = max_pixel_value;
 
-  data.resize(width * height);
-  counter = 0;
+  data.resize(height);
+  for (auto& d : data) {
+    d.resize(width);
+  }
 }
 
 template <class T>
-PixMap<T>& PixMap<T>::operator<<(T val) {
-  data.at(counter) = val;
+PixMap<T>& PixMap<T>::set_pixel(size_t x, size_t y, T val) {
+  if (x >= 0 and x < head.width and y >= 0 and y < head.height) {
+    data.at(y).at(x) = val;
+  } else {
+    std::cerr << "Out of Bound access!\n";
+  }
   return *this;
 }
 
-template <class T>
-PixMap<T>& PixMap<T>::set_pixel(unsigned i, unsigned j, T val) {
-  data.at(i * head.width + j) = val;
-  return *this;
-}
-
-PixBitMap::PixBitMap(unsigned width, unsigned height)
+PixBitMap::PixBitMap(size_t width, size_t height)
     : PixMap<unsigned>("P1", width, height, 1) {}
 
-/* PixBitMap::PixBitMap(unsigned width, unsigned height, std::string type) { */
-/*   if (type == "regular") { */
-/*     PixMap("P4", width, height, 1); */
-/*   } else if (type == "plain") { */
-/*     PixBitMap(width, height); */
-/*   } */
-/* } */
-PixGreyMap::PixGreyMap(unsigned width, unsigned height,
-                       unsigned max_pixel_value)
+PixGreyMap::PixGreyMap(size_t width, size_t height, unsigned max_pixel_value)
     : PixMap<unsigned>("P2", width, height, max_pixel_value) {}
 
 RGB::RGB() {
@@ -132,6 +136,7 @@ RGB::RGB(unsigned red, unsigned green, unsigned blue) {
   b = blue;
 }
 
-PixPixMap::PixPixMap(unsigned width, unsigned height, unsigned max_pixel_value)
+PixPixMap::PixPixMap(size_t width, size_t height, unsigned max_pixel_value)
     : PixMap<RGB>("P3", width, height, max_pixel_value) {}
-#endif  // PM_HPP
+
+#endif  // PPM_HPP
