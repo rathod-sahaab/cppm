@@ -28,8 +28,8 @@ Library
 ---
 Three classes are provided
 - `PixBitMap` (Black or white)
-- PixGreyMap (many shades of grey :D )
-- PixPixMap (Rainbow(color) mode)
+- `PixGreyMap` (many shades of grey :D )
+- `PixPixMap` (Rainbow(color) mode)
 
 PixBitMap constructor takes two arguments width and height
 
@@ -47,7 +47,7 @@ fill(val)
 This member function fills the image with passed argument
 
 ```
-set_pixel(x,y,val)
+set_pixel(x, y, val)
 ```
 
 This sets pixel with x and y co-ordinates to given val.
