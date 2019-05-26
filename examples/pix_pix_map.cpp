@@ -3,7 +3,7 @@
 
 int main() {
   const unsigned MAX = 255;
-  PixPixMap p(1920, 1080, MAX);
+  PixPixMap p(480, 270, MAX);
   std::ofstream file("test.ppm");
   for (unsigned y = 0; y < p.get_height(); ++y) {
     for (unsigned x = 0; x < p.get_width(); ++x) {
