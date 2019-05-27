@@ -1,5 +1,5 @@
-# P-M : Portable Map family library
-
+# ppm.hpp : [ Netpbm ](https://en.wikipedia.org/wiki/Netpbm_format) family manipulation library
+### C++11, C++14
 This library provides data stucture and file mechanism for parsing and writing [ Netpbm ](https://en.wikipedia.org/wiki/Netpbm_format) family images.
 - PPM (Portable Pix Map)
 - PGM (Portable Grey Map)
